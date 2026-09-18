@@ -6,8 +6,7 @@ import CountdownTimer from './CountdownTimer';
 
 const { Title, Paragraph, Text } = Typography;
 
-export default function DayDiscussion()
-{
+export default function DayDiscussion() {
   const { game, update } = useGame();
   const { players, day, settings } = game;
   const { order, turnIndex, turnSubStage, challengedIds, challengeLog, kind } = day;
@@ -21,8 +20,7 @@ export default function DayDiscussion()
   const [challengeConfirmed, setChallengeConfirmed] = useState(false);
 
   // با شروع نوبت هرکس، انتخاب چالش محلی را ریست کن
-  useEffect(() =>
-  {
+  useEffect(() => {
     setSelectedTarget(null);
     setChallengeConfirmed(false);
   }, [turnIndex]);
@@ -39,13 +37,10 @@ export default function DayDiscussion()
   const noEligible =
     !isBlind && turnSubStage === 'challenge' && eligibleTargets.length === 0 && !challengeConfirmed;
 
-  const goToVotingOrNextTurn = () =>
-  {
+  const goToVotingOrNextTurn = () => {
     const nextIndex = turnIndex + 1;
-    if (nextIndex >= order.length)
-    {
-      if (isBlind)
-      {
+    if (nextIndex >= order.length) {
+      if (isBlind) {
         // روز کوری رای‌گیری ندارد؛ مستقیم به شب معارفه برو
         update((g) => ({
           ...g,
@@ -54,12 +49,10 @@ export default function DayDiscussion()
           nightStepIndex: 0,
           nightActions: {},
         }));
-      } else
-      {
+      } else {
         update((g) => ({ ...g, day: { ...g.day, stage: DAY_STAGES.VOTING } }));
       }
-    } else
-    {
+    } else {
       update((g) => ({
         ...g,
         day: { ...g.day, turnIndex: nextIndex, turnSubStage: isBlind ? 'speaking' : 'challenge' },
@@ -67,23 +60,19 @@ export default function DayDiscussion()
     }
   };
 
-  const finishChallengeStep = () =>
-  {
+  const finishChallengeStep = () => {
     update((g) => ({ ...g, day: { ...g.day, turnSubStage: 'speaking' } }));
   };
 
   // اگر هیچ هدف واجد شرایطی برای چالش باقی نمانده، خودکار از این مرحله عبور کن
-  useEffect(() =>
-  {
-    if (noEligible)
-    {
+  useEffect(() => {
+    if (noEligible) {
       finishChallengeStep();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noEligible]);
 
-  const confirmChallenge = () =>
-  {
+  const confirmChallenge = () => {
     if (!selectedTarget || !speaker) return;
     const target = byId[selectedTarget];
     update((g) => ({
@@ -162,70 +151,63 @@ export default function DayDiscussion()
                 ))}
               </Space>
             </Radio.Group>
-            <Space style={{ flexWrap: 'wrap', width: '100%', justifyContent: 'center', rowGap: '8px' }}>
-            <Button block onClick={finishChallengeStep}>
-              این نفر چالش نمی‌دهد
-            </Button>
-            <Button type="primary" block disabled={!selectedTarget} onClick={confirmChallenge}>
-              ثبت چالش و شروع زمان چالش
-            </Button>
+            <Space wrap style={{ width: '100%', justifyContent: 'center', rowGap: 8 }}>
+              <Button block onClick={finishChallengeStep}>
+                این نفر چالش نمی‌دهد
+              </Button>
+              <Button type="primary" block disabled={!selectedTarget} onClick={confirmChallenge}>
+                ثبت چالش و شروع زمان چالش
+              </Button>
+            </Space>
           </Space>
-        </Space>
         </Card>
-  )
-}
+      )}
 
-{
-  !isBlind && turnSubStage === 'challenge' && challengeConfirmed && (
-    <Card>
-      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
-        <Alert
-          type="warning"
-          showIcon
-          title={`چالش گرفته‌شده: ${byId[selectedTarget]?.name} — زمان چالش (نصف زمان صحبت):`}
-        />
-        <CountdownTimer
-          key={`challenge-${turnIndex}`}
-          totalSeconds={challengeSeconds}
-          onFinish={finishChallengeStep}
-          color="#d46b08"
-          finishLabel="پایان زمان چالش"
-        />
-      </Space>
-    </Card>
-  )
-}
+      {!isBlind && turnSubStage === 'challenge' && challengeConfirmed && (
+        <Card>
+          <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+            <Alert
+              type="warning"
+              showIcon
+              title={`چالش گرفته‌شده: ${byId[selectedTarget]?.name} — زمان چالش (نصف زمان صحبت):`}
+            />
+            <CountdownTimer
+              key={`challenge-${turnIndex}`}
+              totalSeconds={challengeSeconds}
+              onFinish={finishChallengeStep}
+              color="#d46b08"
+              finishLabel="پایان زمان چالش"
+            />
+          </Space>
+        </Card>
+      )}
 
-{
-  turnSubStage === 'speaking' && (
-    <Card>
-      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
-        <Alert type="success" showIcon icon={<SoundOutlined />} title={`زمان صحبت ${speaker.name}:`} />
-        <CountdownTimer
-          key={`speaking-${turnIndex}`}
-          totalSeconds={speakSeconds}
-          onFinish={goToVotingOrNextTurn}
-          color="#389e0d"
-          finishLabel="پایان صحبت"
-        />
-      </Space>
-    </Card>
-  )
-}
+      {turnSubStage === 'speaking' && (
+        <Card>
+          <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+            <Alert type="success" showIcon icon={<SoundOutlined />} title={`زمان صحبت ${speaker.name}:`} />
+            <CountdownTimer
+              key={`speaking-${turnIndex}`}
+              totalSeconds={speakSeconds}
+              onFinish={goToVotingOrNextTurn}
+              color="#389e0d"
+              finishLabel="پایان صحبت"
+            />
+          </Space>
+        </Card>
+      )}
 
-{
-  !isBlind && challengeLog.length > 0 && (
-    <Card size="small" title="چالش‌های این دور" style={{ marginTop: 16 }}>
-      <Space orientation="vertical" size={4}>
-        {challengeLog.map((c, idx) => (
-          <Text key={idx}>
-            {c.fromName} ← چالش داد به → {c.toName}
-          </Text>
-        ))}
-      </Space>
-    </Card>
-  )
-}
-    </div >
+      {!isBlind && challengeLog.length > 0 && (
+        <Card size="small" title="چالش‌های این دور" style={{ marginTop: 16 }}>
+          <Space orientation="vertical" size={4}>
+            {challengeLog.map((c, idx) => (
+              <Text key={idx}>
+                {c.fromName} ← چالش داد به → {c.toName}
+              </Text>
+            ))}
+          </Space>
+        </Card>
+      )}
+    </div>
   );
 }

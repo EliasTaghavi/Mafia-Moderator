@@ -31,6 +31,7 @@ export function distributeRoles(playerNames, roleCounts) {
     roleId: shuffledRoles[idx],
     alive: true,
     toughUsed: false,
+    toughInquiriesUsed: 0,
   }));
 }
 
@@ -52,15 +53,15 @@ export function checkWinner(players) {
 
 /**
  * محاسبه‌ی نتیجه‌ی نهایی یک شب
- * actions: { mafiaTeamTargetId, sniperTargetId, doctorTargetId, detectiveTargetId }
- * players: آرایه‌ی فعلی بازیکنان (alive/roleId/toughUsed)
- * خروجی: { deaths: [{playerId, name, cause}], toughSaved: {playerId,name} | null, updatedPlayers }
+ * actions: { mafiaTeamTargetId, sniperTargetId, doctorTargetId, detectiveTargetId, toughInquiryRequested }
+ * players: آرایه‌ی فعلی بازیکنان (alive/roleId/toughUsed/toughInquiriesUsed)
+ * خروجی: { deaths, toughSaved, toughInquiryResult, updatedPlayers }
  */
 export function resolveNight(players, actions) {
   const byId = Object.fromEntries(players.map((p) => [p.id, p]));
   const pendingDeaths = new Map(); // playerId -> cause
 
-  const { mafiaTeamTargetId, sniperTargetId, doctorTargetId } = actions;
+  const { mafiaTeamTargetId, sniperTargetId, doctorTargetId, toughInquiryRequested } = actions;
 
   // ۱. نتیجه‌ی تک‌تیرانداز
   let sniperPlayer = null;
@@ -101,6 +102,18 @@ export function resolveNight(players, actions) {
     toughSaved = { playerId: mafiaTeamTargetId, name: byId[mafiaTeamTargetId].name };
   }
 
+  // ۵. استعلام آماری جان‌سخت: تعداد افراد خارج‌شده‌ی هر تیم را حساب کن، شاملِ کسی که امشب هم حذف می‌شود
+  let toughInquiryResult = null;
+  const inquiringToughId = toughInquiryRequested
+    ? players.find((p) => p.alive && p.roleId === 'tough')?.id
+    : null;
+  if (toughInquiryRequested && inquiringToughId) {
+    const isDeadNow = (p) => !p.alive || pendingDeaths.has(p.id);
+    const deadMafia = players.filter((p) => isDeadNow(p) && ROLES[p.roleId]?.team === 'mafia').length;
+    const deadCitizen = players.filter((p) => isDeadNow(p) && ROLES[p.roleId]?.team === 'citizen').length;
+    toughInquiryResult = { mafia: deadMafia, citizen: deadCitizen };
+  }
+
   const deaths = [...pendingDeaths.entries()].map(([playerId, cause]) => ({
     playerId,
     name: byId[playerId]?.name,
@@ -111,11 +124,15 @@ export function resolveNight(players, actions) {
     if (pendingDeaths.has(p.id)) {
       return { ...p, alive: false };
     }
+    let next = p;
     if (toughSaved && p.id === toughSaved.playerId) {
-      return { ...p, toughUsed: true };
+      next = { ...next, toughUsed: true };
     }
-    return p;
+    if (inquiringToughId && p.id === inquiringToughId) {
+      next = { ...next, toughInquiriesUsed: (next.toughInquiriesUsed || 0) + 1 };
+    }
+    return next;
   });
 
-  return { deaths, toughSaved, updatedPlayers };
+  return { deaths, toughSaved, toughInquiryResult, updatedPlayers };
 }

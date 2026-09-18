@@ -13,6 +13,8 @@ export const DAY_STAGES = {
   NIGHT_RESULT: 'nightResult',
   DISCUSSION: 'discussion',
   VOTING: 'voting',
+  DEFENSE: 'defense',
+  FINAL_VOTE: 'finalVote',
   RESULTS: 'results',
 };
 
@@ -32,7 +34,11 @@ export const freshDay = (kind = DAY_KINDS.REGULAR) => ({
   turnSubStage: 'challenge', // 'challenge' | 'speaking'
   challengedIds: [], // کسانی که در این دور روز قبلاً چالش گرفته‌اند
   challengeLog: [], // [{ fromName, toName }]
-  votes: {}, // playerId -> تعداد رای
+  votes: {}, // playerId -> تعداد رای دور اول
+  threshold: 0, // نصاب ورود به دفاعیه = سقفِ نصفِ افراد زنده
+  defendants: [], // [{ id, name, votes }] مرتب‌شده نزولی؛ کسانی که به نصاب رسیدند
+  defenseIndex: 0, // نوبت فعلی دفاعیه
+  finalVotes: {}, // playerId -> تعداد رای در دور دوم/دفاعیه
   eliminatedId: null,
   eliminatedName: null,
   tie: false,
@@ -46,6 +52,47 @@ export const buildDiscussionDay = (players, kind) => ({
   order: players.filter((p) => p.alive).map((p) => p.id),
   turnSubStage: kind === DAY_KINDS.BLIND ? 'speaking' : 'challenge',
 });
+
+// اعمال نتیجه‌ی نهایی رای‌گیری روز (حذف یا عدم حذف) + ثبت در تاریخچه + رفتن به مرحله‌ی نتیجه
+export function applyElimination(g, { eliminatedId, votesTally, tie }) {
+  const eliminatedName = eliminatedId ? g.players.find((p) => p.id === eliminatedId)?.name : null;
+  const updatedPlayers = eliminatedId
+    ? g.players.map((p) => (p.id === eliminatedId ? { ...p, alive: false } : p))
+    : g.players;
+  const updatedHistory = [...g.history];
+  const kind = g.day.kind || DAY_KINDS.REGULAR;
+  if (kind === DAY_KINDS.REGULAR) {
+    const lastIdx = updatedHistory.length - 1;
+    if (lastIdx >= 0) {
+      updatedHistory[lastIdx] = {
+        ...updatedHistory[lastIdx],
+        eliminatedByVote: eliminatedName,
+        votesTally,
+      };
+    }
+  } else {
+    updatedHistory.push({
+      night: 0,
+      kind,
+      deaths: [],
+      toughSaved: null,
+      eliminatedByVote: eliminatedName,
+      votesTally,
+    });
+  }
+  return {
+    ...g,
+    players: updatedPlayers,
+    history: updatedHistory,
+    day: {
+      ...g.day,
+      stage: DAY_STAGES.RESULTS,
+      eliminatedId: eliminatedId || null,
+      eliminatedName: eliminatedName || null,
+      tie: !!tie,
+    },
+  };
+}
 
 const emptyGame = () => ({
   phase: PHASES.SETUP,

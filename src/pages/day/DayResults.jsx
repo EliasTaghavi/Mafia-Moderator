@@ -8,12 +8,13 @@ const { Title, Text } = Typography;
 
 export default function DayResults() {
   const { game, update, resetGame } = useGame();
-  const { players, day } = game;
-  const { votes, eliminatedName, tie, kind } = day;
+  const { players, day, history } = game;
+  const { eliminatedName, tie, kind, defendants } = day;
 
-  const alivePlayers = players.filter((p) => p.alive || p.id === day.eliminatedId);
-  const rows = alivePlayers
-    .map((p) => ({ key: p.id, name: p.name, votes: votes[p.id] || 0 }))
+  const lastEntry = history[history.length - 1];
+  const votesTally = lastEntry?.votesTally || [];
+  const rows = votesTally
+    .map((v, idx) => ({ key: idx, name: v.name, votes: v.votes }))
     .sort((a, b) => b.votes - a.votes);
 
   const winner = checkWinner(players);
@@ -53,9 +54,23 @@ export default function DayResults() {
         📢 نتیجه‌ی روز
       </Title>
 
-      <Card title="جدول رای‌گیری" style={{ marginBottom: 16 }}>
+      <Card title="جدول رای‌گیری (دور اول)" style={{ marginBottom: 16 }}>
         <Table columns={columns} dataSource={rows} pagination={false} size="small" />
       </Card>
+
+      {defendants && defendants.length > 0 && (
+        <Alert
+          style={{ marginBottom: 16 }}
+          type="warning"
+          showIcon
+          title={`وارد دفاعیه شدند: ${defendants.map((d) => d.name).join('، ')}`}
+          description={
+            defendants.length === 1
+              ? 'رای‌گیری دور دوم به‌صورت آشکار انجام شد.'
+              : 'رای‌گیری دور دوم به‌صورت خواب نیمروز (چشم‌بسته) بین بقیه‌ی افراد انجام شد.'
+          }
+        />
+      )}
 
       {eliminatedName ? (
         <Alert

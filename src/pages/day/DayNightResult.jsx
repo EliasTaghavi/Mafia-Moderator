@@ -36,7 +36,7 @@ export default function DayNightResult() {
 
       <Card title="اتفاقات دیشب (برای اعلام به بازیکنان)" style={{ marginBottom: 16 }}>
         {lastNight && lastNight.deaths.length > 0 ? (
-          <Space orientation="vertical" size={4} style={{ width: '100%' }} split={<Divider style={{ margin: '4px 0' }} />}>
+          <Space orientation="vertical" size={4} style={{ width: '100%' }} separator={<Divider style={{ margin: '4px 0' }} />}>
             {lastNight.deaths.map((d, idx) => (
               <div key={idx}>
                 <Text strong>{d.name}</Text>
@@ -55,6 +55,15 @@ export default function DayNightResult() {
             type="warning"
             showIcon
             title={`${lastNight.toughSaved.name} هدف مافیا بود اما به‌خاطر جان‌سختی زنده ماند (این محافظت دیگر برای او تکرار نمی‌شود).`}
+          />
+        )}
+        {lastNight?.toughInquiryResult && (
+          <Alert
+            style={{ marginTop: 8 }}
+            type="info"
+            showIcon
+            title="نتیجه‌ی استعلام جان‌سخت (این فقط برای اعلام عمومی به همه است، نه نام و نقش کسی)"
+            description={`تعداد افراد خارج‌شده تا این لحظه — تیم مافیا: ${lastNight.toughInquiryResult.mafia} نفر | تیم شهروند: ${lastNight.toughInquiryResult.citizen} نفر`}
           />
         )}
       </Card>
