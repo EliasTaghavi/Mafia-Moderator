@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Typography, Steps, Radio, Button, Space, Alert, Tag, Empty } from 'antd';
 import { SoundOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { DAY_STAGES, DAY_KINDS, PHASES, useGame } from '../../store';
+import { computeNextRoundStarterId } from '../../gameLogic';
 import CountdownTimer from './CountdownTimer';
 
 const { Title, Paragraph, Text } = Typography;
@@ -40,6 +41,7 @@ export default function DayDiscussion() {
   const goToVotingOrNextTurn = () => {
     const nextIndex = turnIndex + 1;
     if (nextIndex >= order.length) {
+      // این دور صحبت تمام شد -> سردسته‌ی دور بعد را از روی نفر اولِ همین دور محاسبه کن
       if (isBlind) {
         // روز کوری رای‌گیری ندارد؛ مستقیم به شب معارفه برو
         update((g) => ({
@@ -48,9 +50,14 @@ export default function DayDiscussion() {
           nightNumber: 0,
           nightStepIndex: 0,
           nightActions: {},
+          currentRoundStarterId: computeNextRoundStarterId(g.players, g.day.order[0]),
         }));
       } else {
-        update((g) => ({ ...g, day: { ...g.day, stage: DAY_STAGES.VOTING } }));
+        update((g) => ({
+          ...g,
+          day: { ...g.day, stage: DAY_STAGES.VOTING },
+          currentRoundStarterId: computeNextRoundStarterId(g.players, g.day.order[0]),
+        }));
       }
     } else {
       update((g) => ({

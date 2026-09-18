@@ -31,7 +31,7 @@ export default function RoleReveal() {
           ...g,
           phase: PHASES.DAY,
           nightNumber: 0,
-          day: buildDiscussionDay(g.players, DAY_KINDS.BLIND),
+          day: buildDiscussionDay(g.players, DAY_KINDS.BLIND, g.currentRoundStarterId),
         }));
       } else {
         update((g) => ({ ...g, phase: PHASES.NIGHT, nightNumber: 0 }));

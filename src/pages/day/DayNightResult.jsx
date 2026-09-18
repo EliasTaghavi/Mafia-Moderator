@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Tag, Button, Space, Alert, Divider } from 'antd';
 import { SunOutlined, MessageOutlined, TrophyOutlined } from '@ant-design/icons';
-import { checkWinner } from '../../gameLogic';
+import { checkWinner, computeRoundOrder } from '../../gameLogic';
 import { DAY_STAGES, useGame } from '../../store';
 
 const { Title, Text } = Typography;
@@ -13,13 +13,12 @@ export default function DayNightResult() {
   const winner = checkWinner(players);
 
   const startDiscussion = () => {
-    const order = players.filter((p) => p.alive).map((p) => p.id);
     update((g) => ({
       ...g,
       day: {
         ...g.day,
         stage: DAY_STAGES.DISCUSSION,
-        order,
+        order: computeRoundOrder(g.players, g.currentRoundStarterId),
         turnIndex: 0,
         turnSubStage: 'challenge',
         challengedIds: [],

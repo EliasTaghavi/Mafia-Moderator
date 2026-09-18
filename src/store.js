@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { computeRoundOrder } from './gameLogic';
 
 const STORAGE_KEY = 'mafia-moderator-game-v1';
 
@@ -46,10 +47,11 @@ export const freshDay = (kind = DAY_KINDS.REGULAR) => ({
 
 // یک روز «کوری» یا «بعد از شب معارفه» که خبری از نتیجه‌ی شب ندارد و مستقیم بحث شروع می‌شود.
 // روز کوری فقط صحبت دارد (بدون چالش و بدون رای‌گیری)، پس نوبت اول را مستقیم روی «صحبت» می‌گذاریم.
-export const buildDiscussionDay = (players, kind) => ({
+// starterId: سردسته‌ی این دور (نفر اول بازی، یا سردسته‌ی محاسبه‌شده برای دورهای بعدی)
+export const buildDiscussionDay = (players, kind, starterId) => ({
   ...freshDay(kind),
   stage: DAY_STAGES.DISCUSSION,
-  order: players.filter((p) => p.alive).map((p) => p.id),
+  order: computeRoundOrder(players, starterId),
   turnSubStage: kind === DAY_KINDS.BLIND ? 'speaking' : 'challenge',
 });
 
@@ -101,6 +103,7 @@ const emptyGame = () => ({
     blindDayEnabled: false, // آیا «روز کوری» قبل از شب معارفه برگزار شود؟
   },
   players: [], // { id, name, roleId, alive, toughUsed }
+  currentRoundStarterId: null, // سردسته‌ی دورِ بعدیِ صحبت روز (نفر اول بازی، سپس بر اساس چرخش +۳)
   revealIndex: 0,
   nightNumber: 0,
   nightStepIndex: 0,

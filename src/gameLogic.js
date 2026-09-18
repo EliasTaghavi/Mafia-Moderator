@@ -51,6 +51,32 @@ export function checkWinner(players) {
   return null;
 }
 
+// ترتیب صحبتِ یک دور روز: از موقعیتِ «سردسته» در لیستِ ثبت‌نامِ کامل شروع می‌کند و به ترتیب
+// همان لیست می‌چرخد، فقط بازیکنان زنده را برمی‌دارد (بازیکنان حذف‌شده در چرخش رد می‌شوند).
+export function computeRoundOrder(players, starterId) {
+  const n = players.length;
+  if (n === 0) return [];
+  let startIdx = players.findIndex((p) => p.id === starterId);
+  if (startIdx === -1) startIdx = 0;
+  const order = [];
+  for (let i = 0; i < n; i++) {
+    const p = players[(startIdx + i) % n];
+    if (p.alive) order.push(p.id);
+  }
+  return order;
+}
+
+// سردسته‌ی دور بعد: از سردسته‌ی واقعیِ دور قبل (کسی که واقعاً اول صحبت کرد)، دو نفرِ بعدی در
+// لیستِ ثبت‌نامِ کامل را رد کن و نفر سوم را به‌عنوان سردسته‌ی دور جدید انتخاب کن.
+export function computeNextRoundStarterId(players, previousFirstSpeakerId) {
+  const n = players.length;
+  if (n === 0) return null;
+  if (!previousFirstSpeakerId) return players[0].id;
+  const idx = players.findIndex((p) => p.id === previousFirstSpeakerId);
+  if (idx === -1) return players[0].id;
+  return players[(idx + 3) % n].id;
+}
+
 /**
  * محاسبه‌ی نتیجه‌ی نهایی یک شب
  * actions: { mafiaTeamTargetId, sniperTargetId, doctorTargetId, detectiveTargetId, toughInquiryRequested }

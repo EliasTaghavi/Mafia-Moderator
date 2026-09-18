@@ -62,7 +62,7 @@ export default function NightConsole() {
           nightActions: {},
           nightStepIndex: 0,
           phase: PHASES.DAY,
-          day: buildDiscussionDay(g.players, DAY_KINDS.POST_INTRO),
+          day: buildDiscussionDay(g.players, DAY_KINDS.POST_INTRO, g.currentRoundStarterId),
         };
       }
 

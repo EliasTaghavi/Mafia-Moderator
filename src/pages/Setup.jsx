@@ -11,6 +11,7 @@ import {
   Alert,
   Divider,
   Switch,
+  Select,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { ROLE_LIST, DEFAULT_ROLE_COUNTS } from '../roles';
@@ -25,13 +26,15 @@ export default function Setup() {
   const [roleCounts, setRoleCounts] = useState(DEFAULT_ROLE_COUNTS);
   const [speakSeconds, setSpeakSeconds] = useState(60);
   const [blindDayEnabled, setBlindDayEnabled] = useState(false);
+  const [starterName, setStarterName] = useState('');
   const [error, setError] = useState('');
 
   const totalRoles = useMemo(
     () => Object.values(roleCounts).reduce((a, b) => a + (Number(b) || 0), 0),
     [roleCounts]
   );
-  const totalPlayers = names.filter((n) => n.trim() !== '').length;
+  const nonEmptyNames = useMemo(() => names.map((n) => n.trim()).filter(Boolean), [names]);
+  const totalPlayers = nonEmptyNames.length;
 
   const handleNameChange = (idx, value) => {
     const next = [...names];
@@ -71,9 +74,12 @@ export default function Setup() {
 
     try {
       const players = distributeRoles(cleanNames, roleCounts);
+      const starterIdx = starterName ? cleanNames.indexOf(starterName) : 0;
+      const starterId = players[starterIdx >= 0 ? starterIdx : 0]?.id ?? null;
       update((g) => ({
         ...g,
         players,
+        currentRoundStarterId: starterId,
         settings: { ...g.settings, speakSeconds: speakSeconds || 60, blindDayEnabled },
         phase: PHASES.REVEAL,
         revealIndex: 0,
@@ -165,7 +171,26 @@ export default function Setup() {
         </Space>
       </Card>
 
-      <Card title="۴. روز کوری (اختیاری)" style={{ marginBottom: 16 }}>
+      <Card title="۴. نفر اول بازی" style={{ marginBottom: 16 }}>
+        <Space orientation="vertical" size={4} style={{ width: '100%' }}>
+          <Text>چه کسی اولین نفری باشد که در دور اول صحبت روز شروع می‌کند؟</Text>
+          <Select
+            value={starterName || undefined}
+            onChange={setStarterName}
+            placeholder="پیش‌فرض: نفر اول لیست اسامی"
+            style={{ width: 260, maxWidth: '100%' }}
+            options={nonEmptyNames.map((n) => ({ value: n, label: n }))}
+            allowClear
+            onClear={() => setStarterName('')}
+          />
+          <Text type="secondary">
+            از دور بعد، ترتیب صحبت خودکار می‌چرخد: از نفر اولِ دورِ قبل دو نفر رد می‌شود و نفر سوم
+            سردسته‌ی دور جدید می‌شود.
+          </Text>
+        </Space>
+      </Card>
+
+      <Card title="۵. روز کوری (اختیاری)" style={{ marginBottom: 16 }}>
         <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
           <Space orientation="vertical" size={2}>
             <Text>برگزاری «روز کوری» قبل از شب معارفه</Text>
